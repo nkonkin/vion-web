@@ -11,10 +11,29 @@ const showValidator = v.object({
   country: v.string(),
   ticketUrl: v.optional(v.string()),
   soldOut: v.optional(v.boolean()),
+  bandsintownId: v.optional(v.string()),
 });
 
 export const listUpcoming = query({
   args: { today: v.string() },
+  returns: v.array(showValidator),
+  handler: async (ctx, args) => {
+    const year = args.today.slice(0, 4);
+    const shows = await ctx.db
+      .query("shows")
+      .withIndex("by_date")
+      .collect();
+
+    return shows
+      .filter((show) => show.date.startsWith(year) && show.date >= args.today)
+      .sort((a, b) => a.date.localeCompare(b.date));
+  },
+});
+
+export const listAll = query({
+  args: {
+    today: v.optional(v.string()),
+  },
   returns: v.array(showValidator),
   handler: async (ctx, args) => {
     const shows = await ctx.db
@@ -22,21 +41,26 @@ export const listUpcoming = query({
       .withIndex("by_date")
       .collect();
 
-    return shows
-      .filter((show) => show.date >= args.today)
-      .sort((a, b) => a.date.localeCompare(b.date));
-  },
-});
+    const today = args.today;
+    const year = today?.slice(0, 4);
+    const scoped = year
+      ? shows.filter((show) => show.date.startsWith(year))
+      : shows;
 
-export const listAll = query({
-  args: {},
-  returns: v.array(showValidator),
-  handler: async (ctx) => {
-    const shows = await ctx.db
-      .query("shows")
-      .withIndex("by_date")
-      .collect();
-    return shows.sort((a, b) => a.date.localeCompare(b.date));
+    if (!today) {
+      return scoped.sort((a, b) => b.date.localeCompare(a.date));
+    }
+
+    return scoped.sort((a, b) => {
+      const aUpcoming = a.date >= today;
+      const bUpcoming = b.date >= today;
+      if (aUpcoming !== bUpcoming) {
+        return aUpcoming ? -1 : 1;
+      }
+      return aUpcoming
+        ? a.date.localeCompare(b.date)
+        : b.date.localeCompare(a.date);
+    });
   },
 });
 

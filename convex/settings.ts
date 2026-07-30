@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalQuery, mutation, query } from "./_generated/server";
 import { assertAdmin } from "./lib/admin";
 
 const settingsValidator = v.object({
@@ -14,6 +14,17 @@ const settingsValidator = v.object({
 });
 
 export const get = query({
+  args: {},
+  returns: v.union(settingsValidator, v.null()),
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("siteSettings")
+      .withIndex("by_key", (q) => q.eq("key", "default"))
+      .unique();
+  },
+});
+
+export const getInternal = internalQuery({
   args: {},
   returns: v.union(settingsValidator, v.null()),
   handler: async (ctx) => {

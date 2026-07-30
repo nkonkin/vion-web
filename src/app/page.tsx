@@ -1,5 +1,5 @@
-import { HomePage } from "@/components/home-page";
+import { Site } from "@/components/site";
 
 export default function Page() {
-  return <HomePage />;
+  return <Site />;
 }

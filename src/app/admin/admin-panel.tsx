@@ -5,18 +5,26 @@ import { FormEvent, useEffect, useState, useTransition } from "react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import {
+  createLink,
+  createLiveset,
   createRelease,
   createShow,
+  deleteLink,
+  deleteLiveset,
   deleteRelease,
   deleteShow,
   getContactMessages,
   loginAdmin,
   logoutAdmin,
   seedContent,
+  seedOfficialLinks,
+  syncBandsintownShows,
+  syncSpotifyReleases,
+  syncYoutubeLivesets,
   updateSettings,
 } from "../actions/admin";
 
-type Tab = "releases" | "shows" | "settings" | "messages";
+type Tab = "releases" | "shows" | "links" | "livesets" | "settings" | "messages";
 
 type Message = {
   _id: Id<"contactMessages">;
@@ -31,11 +39,14 @@ export function AdminPanel({ initialAuthed }: { initialAuthed: boolean }) {
   const [password, setPassword] = useState("");
   const [tab, setTab] = useState<Tab>("releases");
   const [error, setError] = useState("");
+  const [syncMessage, setSyncMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isPending, startTransition] = useTransition();
 
   const releases = useQuery(api.releases.list);
-  const shows = useQuery(api.shows.listAll);
+  const shows = useQuery(api.shows.listAll, {});
+  const links = useQuery(api.links.list);
+  const livesets = useQuery(api.livesets.list);
   const settings = useQuery(api.settings.get);
 
   useEffect(() => {
@@ -109,7 +120,8 @@ export function AdminPanel({ initialAuthed }: { initialAuthed: boolean }) {
       </div>
 
       <div className="mt-10 flex flex-wrap gap-4">
-        {(["releases", "shows", "settings", "messages"] as Tab[]).map((item) => (
+        {(["releases", "shows", "links", "livesets", "settings", "messages"] as Tab[]).map(
+          (item) => (
           <button
             key={item}
             type="button"
@@ -138,6 +150,30 @@ export function AdminPanel({ initialAuthed }: { initialAuthed: boolean }) {
 
       {tab === "releases" && (
         <div className="mt-12 space-y-10">
+          <div className="flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              onClick={() =>
+                startTransition(async () => {
+                  setError("");
+                  setSyncMessage("");
+                  try {
+                    const result = await syncSpotifyReleases();
+                    setSyncMessage(
+                      `Spotify sync: ${result.added} added, ${result.updated} updated (${result.total} total)`,
+                    );
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Spotify sync failed");
+                  }
+                })
+              }
+              disabled={isPending}
+              className="font-display text-[0.65rem] uppercase tracking-[0.3em]"
+            >
+              Sync from Spotify
+            </button>
+            {syncMessage && <p className="text-sm text-muted">{syncMessage}</p>}
+          </div>
           <ReleaseForm
             onSubmit={(data) =>
               startTransition(async () => {
@@ -151,7 +187,11 @@ export function AdminPanel({ initialAuthed }: { initialAuthed: boolean }) {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="font-medium">{release.title}</p>
-                    <p className="text-sm text-muted">{release.artists}</p>
+                    <p className="text-sm text-muted">
+                      {release.artists}
+                      {release.format ? ` · ${release.format}` : ""}
+                      {release.spotifyId ? " · Spotify" : ""}
+                    </p>
                   </div>
                   <button
                     type="button"
@@ -173,6 +213,34 @@ export function AdminPanel({ initialAuthed }: { initialAuthed: boolean }) {
 
       {tab === "shows" && (
         <div className="mt-12 space-y-10">
+          <div className="flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              onClick={() =>
+                startTransition(async () => {
+                  setError("");
+                  setSyncMessage("");
+                  try {
+                    const result = await syncBandsintownShows();
+                    setSyncMessage(
+                      `Bandsintown sync: ${result.added} added, ${result.updated} updated, ${result.removed} removed (${result.total} total)`,
+                    );
+                  } catch (err) {
+                    setError(
+                      err instanceof Error ? err.message : "Bandsintown sync failed",
+                    );
+                  }
+                })
+              }
+              disabled={isPending}
+              className="font-display text-[0.65rem] uppercase tracking-[0.3em]"
+            >
+              Sync from Bandsintown
+            </button>
+            {syncMessage && tab === "shows" && (
+              <p className="text-sm text-muted">{syncMessage}</p>
+            )}
+          </div>
           <ShowForm
             onSubmit={(data) =>
               startTransition(async () => {
@@ -190,6 +258,7 @@ export function AdminPanel({ initialAuthed }: { initialAuthed: boolean }) {
                     </p>
                     <p className="text-sm text-muted">
                       {show.city}, {show.country}
+                      {show.bandsintownId ? " · Bandsintown" : ""}
                     </p>
                   </div>
                   <button
@@ -197,6 +266,129 @@ export function AdminPanel({ initialAuthed }: { initialAuthed: boolean }) {
                     onClick={() =>
                       startTransition(async () => {
                         await deleteShow(show._id);
+                      })
+                    }
+                    className="text-xs uppercase tracking-[0.2em] text-muted"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {tab === "links" && (
+        <div className="mt-12 space-y-10">
+          <button
+            type="button"
+            onClick={() =>
+              startTransition(async () => {
+                setError("");
+                setSyncMessage("");
+                try {
+                  const count = await seedOfficialLinks();
+                  setSyncMessage(`Loaded ${count} official DSP + social links`);
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : "Failed to seed links");
+                }
+              })
+            }
+            className="font-display text-[0.65rem] uppercase tracking-[0.3em]"
+          >
+            Load official DSPs + socials
+          </button>
+          {syncMessage && tab === "links" && (
+            <p className="text-sm text-muted">{syncMessage}</p>
+          )}
+          <LinkForm
+            onSubmit={(data) =>
+              startTransition(async () => {
+                await createLink(data);
+              })
+            }
+          />
+          <ul className="divide-y divide-border">
+            {links?.map((link) => (
+              <li key={link._id} className="py-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-medium">{link.label}</p>
+                    <p className="text-sm text-muted">{link.url}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      startTransition(async () => {
+                        await deleteLink(link._id);
+                      })
+                    }
+                    className="text-xs uppercase tracking-[0.2em] text-muted"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {tab === "livesets" && (
+        <div className="mt-12 space-y-10">
+          <div className="flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              onClick={() =>
+                startTransition(async () => {
+                  setError("");
+                  setSyncMessage("");
+                  try {
+                    const result = await syncYoutubeLivesets();
+                    setSyncMessage(
+                      `YouTube sync: ${result.added} added, ${result.updated} updated, ${result.removed} removed (${result.total} total)`,
+                    );
+                  } catch (err) {
+                    setError(
+                      err instanceof Error ? err.message : "YouTube sync failed",
+                    );
+                  }
+                })
+              }
+              disabled={isPending}
+              className="font-display text-[0.65rem] uppercase tracking-[0.3em]"
+            >
+              Sync from YouTube playlist
+            </button>
+            {syncMessage && tab === "livesets" && (
+              <p className="text-sm text-muted">{syncMessage}</p>
+            )}
+          </div>
+          <LivesetForm
+            onSubmit={(data) =>
+              startTransition(async () => {
+                await createLiveset(data);
+              })
+            }
+          />
+          <ul className="divide-y divide-border">
+            {livesets?.map((liveset) => (
+              <li key={liveset._id} className="py-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-medium">{liveset.title}</p>
+                    <p className="text-sm text-muted">
+                      {liveset.recordedAt}
+                      {liveset.city ? ` · ${liveset.city}` : ""}
+                      {liveset.youtubeId ? " · YouTube" : ""}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      startTransition(async () => {
+                        await deleteLiveset(liveset._id);
                       })
                     }
                     className="text-xs uppercase tracking-[0.2em] text-muted"
@@ -356,6 +548,100 @@ function ShowForm({
       <div className="md:col-span-2">
         <button type="submit" className="font-display text-[0.65rem] uppercase tracking-[0.3em]">
           Add show
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function LinkForm({
+  onSubmit,
+}: {
+  onSubmit: (data: { label: string; url: string; sortOrder: number }) => void;
+}) {
+  const [label, setLabel] = useState("");
+  const [url, setUrl] = useState("");
+  const [sortOrder, setSortOrder] = useState("1");
+
+  return (
+    <form
+      className="grid gap-4 md:grid-cols-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit({
+          label,
+          url,
+          sortOrder: Number(sortOrder),
+        });
+        setLabel("");
+        setUrl("");
+      }}
+    >
+      <Field label="Label" value={label} onChange={setLabel} />
+      <Field label="URL" value={url} onChange={setUrl} />
+      <Field label="Sort Order" value={sortOrder} onChange={setSortOrder} />
+      <div className="md:col-span-2">
+        <button type="submit" className="font-display text-[0.65rem] uppercase tracking-[0.3em]">
+          Add link
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function LivesetForm({
+  onSubmit,
+}: {
+  onSubmit: (data: {
+    title: string;
+    recordedAt: string;
+    venue?: string;
+    city?: string;
+    url: string;
+    coverUrl?: string;
+    sortOrder: number;
+  }) => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [recordedAt, setRecordedAt] = useState("");
+  const [venue, setVenue] = useState("");
+  const [city, setCity] = useState("");
+  const [url, setUrl] = useState("");
+  const [coverUrl, setCoverUrl] = useState("");
+  const [sortOrder, setSortOrder] = useState("1");
+
+  return (
+    <form
+      className="grid gap-4 md:grid-cols-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit({
+          title,
+          recordedAt,
+          venue: venue || undefined,
+          city: city || undefined,
+          url,
+          coverUrl: coverUrl || undefined,
+          sortOrder: Number(sortOrder),
+        });
+        setTitle("");
+        setRecordedAt("");
+        setVenue("");
+        setCity("");
+        setUrl("");
+        setCoverUrl("");
+      }}
+    >
+      <Field label="Title" value={title} onChange={setTitle} />
+      <Field label="Recorded At" value={recordedAt} onChange={setRecordedAt} type="date" />
+      <Field label="Venue" value={venue} onChange={setVenue} />
+      <Field label="City" value={city} onChange={setCity} />
+      <Field label="URL" value={url} onChange={setUrl} />
+      <Field label="Cover URL" value={coverUrl} onChange={setCoverUrl} />
+      <Field label="Sort Order" value={sortOrder} onChange={setSortOrder} />
+      <div className="md:col-span-2">
+        <button type="submit" className="font-display text-[0.65rem] uppercase tracking-[0.3em]">
+          Add liveset
         </button>
       </div>
     </form>

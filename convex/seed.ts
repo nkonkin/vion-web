@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 import { assertAdmin } from "./lib/admin";
+import { OFFICIAL_LINKS } from "./links";
 
 export const seed = mutation({
   args: { adminSecret: v.string() },
@@ -36,30 +37,7 @@ export const seed = mutation({
       });
     }
 
-    const existingShows = await ctx.db.query("shows").take(1);
-    if (existingShows.length === 0) {
-      await ctx.db.insert("shows", {
-        date: "2026-04-18",
-        venue: "Warehouse",
-        city: "Berlin",
-        country: "DE",
-        ticketUrl: "https://example.com/tickets",
-      });
-      await ctx.db.insert("shows", {
-        date: "2026-05-24",
-        venue: "Motion",
-        city: "London",
-        country: "UK",
-        ticketUrl: "https://example.com/tickets",
-      });
-      await ctx.db.insert("shows", {
-        date: "2026-06-14",
-        venue: "Output",
-        city: "New York",
-        country: "US",
-        soldOut: false,
-      });
-    }
+    // Tour dates come from Bandsintown sync — no placeholder shows
 
     const existingSettings = await ctx.db
       .query("siteSettings")
@@ -69,13 +47,22 @@ export const seed = mutation({
     if (!existingSettings) {
       await ctx.db.insert("siteSettings", {
         key: "default",
-        instagram: "https://instagram.com/vionkonger",
-        spotify: "https://open.spotify.com",
-        soundcloud: "https://soundcloud.com",
-        youtube: "https://youtube.com",
+        instagram: "https://www.instagram.com/vionkonger/",
+        spotify: "https://open.spotify.com/artist/30IONe5gqXy6MXSNHVCCYP",
+        soundcloud: "https://soundcloud.com/vionkonger",
+        youtube: "https://music.youtube.com/search?q=Vion%20Konger",
         bookingEmail: "booking@vionkonger.com",
       });
     }
+
+    const existingLinks = await ctx.db.query("links").take(1);
+    if (existingLinks.length === 0) {
+      for (const link of OFFICIAL_LINKS) {
+        await ctx.db.insert("links", link);
+      }
+    }
+
+    // Livesets come from YouTube playlist sync — no placeholders
 
     return null;
   },

@@ -9,7 +9,11 @@ export default defineSchema({
     linkUrl: v.string(),
     releasedAt: v.string(),
     sortOrder: v.number(),
-  }).index("by_sort_order", ["sortOrder"]),
+    spotifyId: v.optional(v.string()),
+    format: v.optional(v.string()),
+  })
+    .index("by_sort_order", ["sortOrder"])
+    .index("by_spotify_id", ["spotifyId"]),
 
   shows: defineTable({
     date: v.string(),
@@ -18,7 +22,10 @@ export default defineSchema({
     country: v.string(),
     ticketUrl: v.optional(v.string()),
     soldOut: v.optional(v.boolean()),
-  }).index("by_date", ["date"]),
+    bandsintownId: v.optional(v.string()),
+  })
+    .index("by_date", ["date"])
+    .index("by_bandsintown_id", ["bandsintownId"]),
 
   siteSettings: defineTable({
     key: v.literal("default"),
@@ -35,4 +42,23 @@ export default defineSchema({
     message: v.string(),
     createdAt: v.number(),
   }).index("by_email_and_created", ["email", "createdAt"]),
+
+  links: defineTable({
+    label: v.string(),
+    url: v.string(),
+    sortOrder: v.number(),
+  }).index("by_sort_order", ["sortOrder"]),
+
+  livesets: defineTable({
+    title: v.string(),
+    recordedAt: v.string(),
+    venue: v.optional(v.string()),
+    city: v.optional(v.string()),
+    url: v.string(),
+    coverUrl: v.optional(v.string()),
+    sortOrder: v.number(),
+    youtubeId: v.optional(v.string()),
+  })
+    .index("by_sort_order", ["sortOrder"])
+    .index("by_youtube_id", ["youtubeId"]),
 });

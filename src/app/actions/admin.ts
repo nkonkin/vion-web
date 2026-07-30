@@ -1,6 +1,6 @@
 "use server";
 
-import { fetchMutation, fetchQuery } from "convex/nextjs";
+import { fetchAction, fetchMutation, fetchQuery } from "convex/nextjs";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { api } from "../../../convex/_generated/api";
@@ -55,6 +55,8 @@ export async function seedContent() {
   await requireAdminSession();
   await fetchMutation(api.seed.seed, { adminSecret: getAdminSecret() });
   revalidatePath("/");
+  revalidatePath("/");
+  revalidatePath("/");
   revalidatePath("/admin");
 }
 
@@ -101,6 +103,36 @@ export async function deleteRelease(id: Id<"releases">) {
   });
   revalidatePath("/");
   revalidatePath("/admin");
+}
+
+export async function syncSpotifyReleases() {
+  await requireAdminSession();
+  const result = await fetchAction(api.spotifySync.syncNow, {
+    adminSecret: getAdminSecret(),
+  });
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return result;
+}
+
+export async function syncBandsintownShows() {
+  await requireAdminSession();
+  const result = await fetchAction(api.bandsintownSync.syncNow, {
+    adminSecret: getAdminSecret(),
+  });
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return result;
+}
+
+export async function syncYoutubeLivesets() {
+  await requireAdminSession();
+  const result = await fetchAction(api.youtubeSync.syncNow, {
+    adminSecret: getAdminSecret(),
+  });
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return result;
 }
 
 export async function createShow(data: {
@@ -167,4 +199,66 @@ export async function updateSettings(data: {
 export async function getContactMessages() {
   await requireAdminSession();
   return fetchQuery(api.contact.list, { adminSecret: getAdminSecret() });
+}
+
+export async function seedOfficialLinks() {
+  await requireAdminSession();
+  const count = await fetchMutation(api.links.seedOfficial, {
+    adminSecret: getAdminSecret(),
+  });
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return count;
+}
+
+export async function createLink(data: {
+  label: string;
+  url: string;
+  sortOrder: number;
+}) {
+  await requireAdminSession();
+  await fetchMutation(api.links.create, {
+    adminSecret: getAdminSecret(),
+    ...data,
+  });
+  revalidatePath("/");
+  revalidatePath("/admin");
+}
+
+export async function deleteLink(id: Id<"links">) {
+  await requireAdminSession();
+  await fetchMutation(api.links.remove, {
+    adminSecret: getAdminSecret(),
+    id,
+  });
+  revalidatePath("/");
+  revalidatePath("/admin");
+}
+
+export async function createLiveset(data: {
+  title: string;
+  recordedAt: string;
+  venue?: string;
+  city?: string;
+  url: string;
+  coverUrl?: string;
+  sortOrder: number;
+}) {
+  await requireAdminSession();
+  await fetchMutation(api.livesets.create, {
+    adminSecret: getAdminSecret(),
+    ...data,
+  });
+  revalidatePath("/");
+  revalidatePath("/admin");
+}
+
+export async function deleteLiveset(id: Id<"livesets">) {
+  await requireAdminSession();
+  await fetchMutation(api.livesets.remove, {
+    adminSecret: getAdminSecret(),
+    id,
+  });
+  revalidatePath("/");
+  revalidatePath("/admin");
 }
