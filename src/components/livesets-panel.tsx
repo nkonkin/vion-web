@@ -15,8 +15,8 @@ export function LivesetsPanel({
   const activeId = selectedId ?? livesets?.[0]?._id ?? null;
 
   return (
-    <div className="h-full min-h-0 overflow-y-auto">
-      <ul>
+    <div className="h-full min-h-0 min-w-0 overflow-x-hidden overflow-y-auto">
+      <ul className="min-w-0">
         {livesets === undefined && (
           <li className="label px-4 py-3 text-muted">Loading</li>
         )}
@@ -30,7 +30,7 @@ export function LivesetsPanel({
           return (
             <li
               key={liveset._id}
-              className={`flex items-baseline border-b border-border transition-colors duration-200 ${
+              className={`flex min-w-0 items-baseline border-b border-border transition-colors duration-200 ${
                 active
                   ? "bg-foreground text-background"
                   : "hover:bg-foreground hover:text-background"
@@ -39,7 +39,7 @@ export function LivesetsPanel({
               <button
                 type="button"
                 onClick={() => onSelect(liveset._id)}
-                className="flex min-w-0 flex-1 items-baseline gap-4 px-4 py-2.5 text-left"
+                className="flex min-w-0 flex-1 items-baseline gap-4 overflow-hidden px-4 py-2.5 text-left"
               >
                 <span className="label w-10 shrink-0 opacity-55">
                   {liveset.recordedAt.startsWith("1970")
@@ -51,7 +51,7 @@ export function LivesetsPanel({
                     {liveset.title}
                   </span>
                   {meta && (
-                    <span className="title-row mt-0.5 block truncate text-[0.75rem] opacity-55">
+                    <span className="title-row mt-0.5 block truncate text-[0.6875rem] opacity-55">
                       {meta}
                     </span>
                   )}

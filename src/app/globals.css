@@ -9,7 +9,7 @@
   --foreground: oklch(0.94 0.01 250);
   --muted: oklch(0.55 0.015 250);
   --border: oklch(0.32 0.012 250);
-  --copy: clamp(0.8125rem, 0.5vw + 0.7rem, 0.9375rem);
+  --copy: clamp(0.6875rem, 0.3vw + 0.58rem, 0.8125rem);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 

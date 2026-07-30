@@ -2,12 +2,12 @@
 
 export type Panel = "music" | "tour" | "livesets" | "links" | "contact";
 
-const links: { id: Panel; label: string }[] = [
-  { id: "music", label: "Music" },
-  { id: "tour", label: "Tour" },
-  { id: "livesets", label: "Livesets" },
-  { id: "links", label: "Links" },
-  { id: "contact", label: "Contact" },
+const links: { id: Panel; label: string; short: string }[] = [
+  { id: "music", label: "Music", short: "Music" },
+  { id: "tour", label: "Tour", short: "Tour" },
+  { id: "livesets", label: "Livesets", short: "Live" },
+  { id: "links", label: "Links", short: "Links" },
+  { id: "contact", label: "Contact", short: "Contact" },
 ];
 
 export function SiteNav({
@@ -18,13 +18,13 @@ export function SiteNav({
   onPanelChange: (panel: Panel) => void;
 }) {
   return (
-    <nav className="grid shrink-0 grid-cols-5 border-b border-border">
+    <nav className="grid w-full min-w-0 shrink-0 grid-cols-5 border-b border-border">
       {links.map((link, index) => (
         <button
           key={link.id}
           type="button"
           onClick={() => onPanelChange(link.id)}
-          className={`label px-1 py-3 text-center transition-colors duration-200 ${
+          className={`label min-w-0 overflow-hidden px-0.5 py-2.5 text-center tracking-[0.02em] transition-colors duration-200 md:px-2 md:py-3 md:tracking-[0.04em] ${
             index < links.length - 1 ? "border-r border-border" : ""
           } ${
             panel === link.id
@@ -32,7 +32,8 @@ export function SiteNav({
               : "hover:bg-foreground hover:text-background"
           }`}
         >
-          {link.label}
+          <span className="block truncate md:hidden">{link.short}</span>
+          <span className="hidden truncate md:block">{link.label}</span>
         </button>
       ))}
     </nav>
