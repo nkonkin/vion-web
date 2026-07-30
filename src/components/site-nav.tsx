@@ -24,7 +24,7 @@ export function SiteNav({
           key={link.id}
           type="button"
           onClick={() => onPanelChange(link.id)}
-          className={`label min-w-0 overflow-hidden px-0.5 py-2.5 text-center tracking-[0.02em] transition-colors duration-200 md:px-2 md:py-3 md:tracking-[0.04em] ${
+          className={`label min-w-0 overflow-hidden px-0.5 py-1.5 text-center tracking-[0.02em] transition-colors duration-200 md:px-2 md:py-2 md:tracking-[0.04em] ${
             index < links.length - 1 ? "border-r border-border" : ""
           } ${
             panel === link.id

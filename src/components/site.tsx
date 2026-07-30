@@ -227,7 +227,7 @@ export function Site() {
           <SiteNav panel={panel} onPanelChange={handlePanelChange} />
 
           {nextShowLabel && (
-            <p className="label w-full shrink-0 truncate border-b border-border px-4 py-2 text-center text-muted md:py-2.5">
+            <p className="label w-full shrink-0 truncate border-b border-border px-4 py-1.5 text-center text-muted md:py-2">
               {nextShowLabel}
             </p>
           )}
