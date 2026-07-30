@@ -1,36 +1,126 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vion Konger — Official Site
 
-## Getting Started
+Minimal artist website for Vion Konger. Built with Next.js, Convex, and Tailwind CSS. Deployed on Vercel.
 
-First, run the development server:
+**Live:** [vion-web.vercel.app](https://vion-web.vercel.app)  
+**Admin:** [/admin](https://vion-web.vercel.app/admin)
+
+## Features
+
+- Full-screen hero with logo and press photo
+- Latest releases (editable without redeploy)
+- Upcoming show dates
+- Contact form with social links
+- Password-gated `/admin` panel for content management
+
+## Local development
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure environment
+
+Copy the example env file:
+
+```bash
+cp .env.example .env.local
+```
+
+Set these in **`.env.local`** (Next.js):
+
+- `NEXT_PUBLIC_CONVEX_URL` — from your Convex project dashboard
+- `ADMIN_PASSWORD` — password for `/admin` login
+
+Set this in the **Convex dashboard** (Settings → Environment Variables):
+
+- `ADMIN_SECRET` — shared secret for admin mutations (use a long random string)
+
+Use the same value pattern: `ADMIN_PASSWORD` is what you type on `/admin`; `ADMIN_SECRET` is what Convex validates server-side.
+
+### 3. Link Convex project
+
+If not already linked:
+
+```bash
+npx convex dev --configure=existing --project vk-web
+```
+
+### 4. Run dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This starts Convex and Next.js together. Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 5. Seed placeholder content
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Go to [http://localhost:3000/admin](http://localhost:3000/admin)
+2. Log in with your `ADMIN_PASSWORD`
+3. Click **Seed placeholders**
 
-## Learn More
+## Admin
 
-To learn more about Next.js, take a look at the following resources:
+Visit `/admin` to manage:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Releases
+- Show dates
+- Social links and booking email
+- Contact form submissions
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Changes appear on the live site immediately — no redeploy needed.
 
-## Deploy on Vercel
+## Deploy to Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 1. Push to GitHub
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+git add .
+git commit -m "Initial Vion Konger site"
+git push -u origin main
+```
+
+### 2. Import on Vercel
+
+Project is linked as **`nkprojects/vion-web`**.
+
+Production env vars to set in the Vercel dashboard (or via CLI):
+
+| Variable | Value |
+|----------|-------|
+| `NEXT_PUBLIC_CONVEX_URL` | Your Convex **production** URL (e.g. `https://determined-rabbit-361.convex.cloud`) |
+| `ADMIN_PASSWORD` | Password for `/admin` login |
+| `ADMIN_SECRET` | Same value as `ADMIN_SECRET` in Convex production env |
+
+Also set in **Convex production** (Settings → Environment Variables):
+
+- `ADMIN_SECRET` — must match Vercel `ADMIN_SECRET`
+
+### 3. Deploy Convex to production
+
+```bash
+npx convex deploy
+```
+
+Ensure `ADMIN_SECRET` is set in the **production** Convex deployment too.
+
+### 4. Redeploy Vercel (if needed)
+
+After Convex prod URL is confirmed, trigger a Vercel redeploy so env vars are picked up.
+
+## Project structure
+
+```
+src/
+  app/           # Next.js routes + admin actions
+  components/    # UI sections
+convex/          # Schema, queries, mutations
+public/          # Logo + press photo
+```
+
+## Design
+
+See [`.impeccable.md`](.impeccable.md) for brand and UI principles.
