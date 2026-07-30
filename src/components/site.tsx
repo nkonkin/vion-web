@@ -182,9 +182,9 @@ export function Site() {
     livesets?.find((l) => l._id === selectedLivesetId) ?? livesets?.[0] ?? null;
 
   const press = PRESS_IMAGES[pressIndex % PRESS_IMAGES.length]!;
-  let mediaSrc = press.src;
+  let mediaSrc: string = press.src;
   let mediaAlt = "Vion Konger";
-  let mediaPosition = press.position;
+  let mediaPosition: string = press.position;
 
   if (panel === "music" && selectedRelease?.coverUrl) {
     mediaSrc = selectedRelease.coverUrl;
