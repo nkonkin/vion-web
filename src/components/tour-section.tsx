@@ -13,20 +13,13 @@ function formatShowDate(date: string) {
 
 export function TourPanel({
   today,
-  nextShowLabel,
 }: {
   today: string;
-  nextShowLabel?: string | null;
 }) {
   const shows = useQuery(api.shows.listAll, { today });
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {nextShowLabel && (
-        <p className="label shrink-0 border-b border-border px-4 py-3 md:hidden">
-          {nextShowLabel}
-        </p>
-      )}
       <div className="min-h-0 flex-1 overflow-y-auto">
         <ul>
           {shows === undefined && (

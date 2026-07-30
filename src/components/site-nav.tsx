@@ -13,37 +13,28 @@ const links: { id: Panel; label: string }[] = [
 export function SiteNav({
   panel,
   onPanelChange,
-  nextShowLabel,
 }: {
   panel: Panel;
   onPanelChange: (panel: Panel) => void;
-  nextShowLabel?: string | null;
 }) {
   return (
-    <nav className="flex shrink-0 items-stretch border-b border-border">
-      <div className="flex min-w-0 flex-1 overflow-x-auto">
-        {links.map((link, index) => (
-          <button
-            key={link.id}
-            type="button"
-            onClick={() => onPanelChange(link.id)}
-            className={`label shrink-0 px-3 py-3 transition-colors duration-200 md:px-5 ${
-              index < links.length - 1 ? "border-r border-border" : ""
-            } ${
-              panel === link.id
-                ? "bg-foreground text-background"
-                : "hover:bg-foreground hover:text-background"
-            }`}
-          >
-            {link.label}
-          </button>
-        ))}
-      </div>
-      {nextShowLabel && (
-        <p className="label hidden shrink-0 items-center border-l border-border px-4 text-muted lg:flex">
-          {nextShowLabel}
-        </p>
-      )}
+    <nav className="grid shrink-0 grid-cols-5 border-b border-border">
+      {links.map((link, index) => (
+        <button
+          key={link.id}
+          type="button"
+          onClick={() => onPanelChange(link.id)}
+          className={`label px-1 py-3 text-center transition-colors duration-200 ${
+            index < links.length - 1 ? "border-r border-border" : ""
+          } ${
+            panel === link.id
+              ? "bg-foreground text-background"
+              : "hover:bg-foreground hover:text-background"
+          }`}
+        >
+          {link.label}
+        </button>
+      ))}
     </nav>
   );
 }

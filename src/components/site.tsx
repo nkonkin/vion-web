@@ -46,22 +46,117 @@ function MediaPane({
   alt: string;
   isPress?: boolean;
 }) {
-  const isLocal = src.startsWith("/");
+  const [base, setBase] = useState({ src, alt, isPress });
+  const [overlay, setOverlay] = useState<{
+    src: string;
+    alt: string;
+    isPress?: boolean;
+  } | null>(null);
+  const [overlayOpaque, setOverlayOpaque] = useState(false);
+  const overlaySrc = overlay?.src ?? null;
+
+  useEffect(() => {
+    const showing = overlaySrc ?? base.src;
+
+    if (src === showing) {
+      if (overlaySrc) {
+        setOverlay((prev) =>
+          prev ? { ...prev, alt, isPress } : prev,
+        );
+      } else {
+        setBase((prev) => ({ ...prev, alt, isPress }));
+      }
+      return;
+    }
+
+    if (src === base.src && overlaySrc) {
+      setOverlay(null);
+      setOverlayOpaque(false);
+      setBase({ src, alt, isPress });
+      return;
+    }
+
+    setOverlay({ src, alt, isPress });
+    setOverlayOpaque(false);
+  }, [src, alt, isPress, base.src, overlaySrc]);
+
+  function finishCrossfade() {
+    if (!overlay || !overlayOpaque) return;
+    setBase(overlay);
+    setOverlay(null);
+    setOverlayOpaque(false);
+  }
 
   return (
     <div className="relative h-full min-h-0 w-full overflow-hidden bg-background">
+      <MediaLayer
+        src={base.src}
+        alt={overlay ? "" : base.alt}
+        isPress={base.isPress}
+        opaque
+        priority
+      />
+      {overlay && (
+        <MediaLayer
+          src={overlay.src}
+          alt={overlay.alt}
+          isPress={overlay.isPress}
+          opaque={overlayOpaque}
+          priority
+          onReady={() => setOverlayOpaque(true)}
+          onFadeEnd={finishCrossfade}
+        />
+      )}
+    </div>
+  );
+}
+
+function MediaLayer({
+  src,
+  alt,
+  isPress,
+  opaque,
+  priority,
+  onReady,
+  onFadeEnd,
+}: {
+  src: string;
+  alt: string;
+  isPress?: boolean;
+  opaque: boolean;
+  priority?: boolean;
+  onReady?: () => void;
+  onFadeEnd?: () => void;
+}) {
+  const isLocal = src.startsWith("/");
+
+  return (
+    <div
+      className={`media-crossfade absolute inset-0 ${
+        opaque ? "opacity-100" : "opacity-0"
+      }`}
+      onTransitionEnd={(event) => {
+        if (event.propertyName !== "opacity") return;
+        if (opaque) onFadeEnd?.();
+      }}
+    >
       <Image
-        key={src}
         src={src}
         alt={alt}
         fill
         quality={100}
         unoptimized={isLocal}
-        className={`media-in object-cover ${
+        priority={priority}
+        onLoad={() => {
+            // Paint opacity-0 first, then transition to 100
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => onReady?.());
+            });
+          }}
+        className={`object-cover ${
           isPress ? "object-[center_18%]" : "object-center"
         }`}
         sizes="(max-width: 768px) 100vw, 62vw"
-        priority
       />
     </div>
   );
@@ -107,12 +202,6 @@ export function Site() {
 
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden overscroll-none bg-background text-foreground">
-      <SiteNav
-        panel={panel}
-        onPanelChange={setPanel}
-        nextShowLabel={nextShowLabel}
-      />
-
       <div className="grid min-h-0 flex-1 md:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
         <div className="flex min-h-0 flex-col border-b border-border md:border-b-0 md:border-r">
           <div className="shrink-0 border-b border-border px-4 py-4 md:px-5 md:py-5">
@@ -126,6 +215,14 @@ export function Site() {
             />
           </div>
 
+          <SiteNav panel={panel} onPanelChange={setPanel} />
+
+          {nextShowLabel && (
+            <p className="label shrink-0 truncate border-b border-border px-4 py-2.5 text-center text-muted">
+              {nextShowLabel}
+            </p>
+          )}
+
           <div className="relative h-[46vh] shrink-0 border-b border-border md:hidden">
             <MediaPane src={mediaSrc} alt={mediaAlt} isPress={isPress} />
           </div>
@@ -137,9 +234,7 @@ export function Site() {
                 onSelect={setSelectedReleaseId}
               />
             )}
-            {panel === "tour" && (
-              <TourPanel today={today} nextShowLabel={nextShowLabel} />
-            )}
+            {panel === "tour" && <TourPanel today={today} />}
             {panel === "livesets" && (
               <LivesetsPanel
                 selectedId={selectedLiveset?._id ?? null}
