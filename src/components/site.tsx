@@ -52,39 +52,21 @@ type MediaState = {
 };
 
 function MediaPane({ src, alt, position }: MediaState) {
-  const [base, setBase] = useState<MediaState>({ src, alt, position });
-  const [overlay, setOverlay] = useState<MediaState | null>(null);
-  const [overlayOpaque, setOverlayOpaque] = useState(false);
-  const overlaySrc = overlay?.src ?? null;
+  const current: MediaState = { src, alt, position };
+  const [base, setBase] = useState<MediaState>(current);
+  const [opaqueSrc, setOpaqueSrc] = useState<string | null>(null);
 
-  useEffect(() => {
-    const showing = overlaySrc ?? base.src;
+  if (src === base.src && (base.alt !== alt || base.position !== position)) {
+    setBase(current);
+  }
 
-    if (src === showing) {
-      if (overlaySrc) {
-        setOverlay((prev) => (prev ? { ...prev, alt, position } : prev));
-      } else {
-        setBase((prev) => ({ ...prev, alt, position }));
-      }
-      return;
-    }
-
-    if (src === base.src && overlaySrc) {
-      setOverlay(null);
-      setOverlayOpaque(false);
-      setBase({ src, alt, position });
-      return;
-    }
-
-    setOverlay({ src, alt, position });
-    setOverlayOpaque(false);
-  }, [src, alt, position, base.src, overlaySrc]);
+  const overlay = src === base.src ? null : current;
+  const overlayOpaque = overlay !== null && opaqueSrc === overlay.src;
 
   function finishCrossfade() {
     if (!overlay || !overlayOpaque) return;
     setBase(overlay);
-    setOverlay(null);
-    setOverlayOpaque(false);
+    setOpaqueSrc(null);
   }
 
   return (
@@ -98,12 +80,13 @@ function MediaPane({ src, alt, position }: MediaState) {
       />
       {overlay && (
         <MediaLayer
+          key={overlay.src}
           src={overlay.src}
           alt={overlay.alt}
           position={overlay.position}
           opaque={overlayOpaque}
           priority
-          onReady={() => setOverlayOpaque(true)}
+          onReady={() => setOpaqueSrc(overlay.src)}
           onFadeEnd={finishCrossfade}
         />
       )}
